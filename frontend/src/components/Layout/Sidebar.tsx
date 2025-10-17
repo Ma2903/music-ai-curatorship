@@ -6,7 +6,7 @@ import Image from 'next/image';
 export function Sidebar() {
     return (
         // Sidebar fixa com largura definida (240px) e fundo escuro
-        <aside className="w-60 bg-neutral-900 p-6 flex flex-col fixed h-[calc(100vh-6rem)] top-0 left-0 z-40">
+        <aside className="w-60 bg-neutral-900 p-6 flex flex-col fixed h-screen top-0 left-0 z-40">    {/* 1. Navegação Principal */}
             {/* 1. Navegação Principal */}
             <nav className="space-y-5">
                 <a href="#" className="flex items-center gap-3 text-sm font-semibold text-white hover:text-neutral-300 transition-colors" aria-current="page">
