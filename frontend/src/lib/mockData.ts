@@ -1,5 +1,5 @@
 // frontend/src/lib/mockData.ts
-import { Song, Playlist, Recommendation, Mood, Genre } from '@/types/music';
+import { Song, Playlist, Recommendation } from '@/types/music';
 
 // --- Músicas de Exemplo ---
 export const mockSongs: Song[] = [

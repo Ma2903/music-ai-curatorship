@@ -1,7 +1,7 @@
 // frontend/src/components/Layout/MusicPlayer.tsx
 import Image from 'next/image';
 import { mockSongs } from '@/lib/mockData';
-import { Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
+import { Play, SkipForward, SkipBack, Volume2 } from 'lucide-react';
 
 // Simula a música atual
 const currentSong = mockSongs[0];
