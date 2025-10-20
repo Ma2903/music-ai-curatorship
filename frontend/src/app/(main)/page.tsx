@@ -30,21 +30,21 @@ export default function Home() {
   ]);
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
-      {/* Seção de Boas-vindas */}
-      <Section
-        title="Bem-vindo ao Music AI Curatorship"
-        subtitle="Descubra novas músicas curadas por IA generativa"
-      >
-        <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg p-4 sm:p-6 border border-green-500/30">
-          <p className="text-neutral-300 text-sm leading-relaxed">
-            O Music AI Curatorship utiliza a inteligência artificial do Gemini para analisar seu
-            histórico de audição e recomendar músicas personalizadas com justificativas detalhadas.
-            Cada recomendação é acompanhada de uma explicação sobre por que a IA acha que você
-            pode gostar dessa faixa.
+    <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto space-y-12 animate-fade-in">
+      {/* Seção Hero */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/20 via-neutral-900 to-neutral-900 border border-green-500/30 p-8 sm:p-12 backdrop-blur-sm">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-green-500 rounded-full blur-3xl" />
+        </div>
+        <div className="relative z-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+            Music AI Curatorship
+          </h1>
+          <p className="text-lg text-neutral-300 max-w-2xl leading-relaxed">
+            Descubra músicas personalizadas curadas por inteligência artificial. Cada recomendação vem com uma explicação detalhada sobre por que a IA acha que você pode gostar.
           </p>
         </div>
-      </Section>
+      </div>
 
       {/* Seção de Recomendações */}
       <Section
@@ -52,8 +52,10 @@ export default function Home() {
         subtitle="Baseado no seu histórico de audição"
       >
         <Grid columns={4}>
-          {recommendations.map((rec) => (
-            <MusicCard key={rec.id} recommendation={rec} />
+          {recommendations.map((rec, index) => (
+            <div key={rec.id} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+              <MusicCard recommendation={rec} />
+            </div>
           ))}
         </Grid>
       </Section>
@@ -64,26 +66,32 @@ export default function Home() {
         subtitle="Acesse suas playlists favoritas"
       >
         <Grid columns={4}>
-          {mockPlaylists.map((playlist) => (
-            <PlaylistCard key={playlist.id} playlist={playlist} />
+          {mockPlaylists.map((playlist, index) => (
+            <div key={playlist.id} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+              <PlaylistCard playlist={playlist} />
+            </div>
           ))}
         </Grid>
       </Section>
 
-      {/* Seção de Descoberta */}
+      {/* Seção de Gêneros */}
       <Section
-        title="Descobrir"
-        subtitle="Explore novos gêneros e artistas"
+        title="Explorar Gêneros"
+        subtitle="Descubra novos estilos e artistas"
       >
         <Grid columns={4}>
-          {['Pop', 'Rock', 'Lo-Fi', 'Eletrônica', 'Sertanejo'].map((genre) => (
+          {['Pop', 'Rock', 'Lo-Fi', 'Eletrônica', 'Sertanejo', 'Rap', 'Reggae', 'Jazz'].map((genre, index) => (
             <div
               key={genre}
-              className="bg-neutral-800 hover:bg-neutral-700 transition-colors p-6 rounded-lg cursor-pointer text-center group"
+              className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700/50 p-6 cursor-pointer transition-all duration-300 hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-500/20 animate-scale-in"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <p className="font-semibold text-white group-hover:text-green-400 transition-colors">
-                {genre}
-              </p>
+              <div className="absolute inset-0 bg-gradient-to-t from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative z-10 text-center">
+                <p className="text-lg font-bold text-white group-hover:text-green-400 transition-colors duration-300">
+                  {genre}
+                </p>
+              </div>
             </div>
           ))}
         </Grid>

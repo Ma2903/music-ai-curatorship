@@ -11,7 +11,7 @@ export const mockSongs: Song[] = [
         duration: "3:45",
         genre: 'Eletrônica',
         mood: 'Relaxante',
-        imageUrl: "https://picsum.photos/id/10/50/50",
+        imageUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
         audioUrl: "/audio/track1.mp3"
     },
     {
@@ -22,7 +22,7 @@ export const mockSongs: Song[] = [
         duration: "4:12",
         genre: 'Rock',
         mood: 'Energético',
-        imageUrl: "https://picsum.photos/id/18/50/50",
+        imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop",
         audioUrl: "/audio/track2.mp3"
     },
     {
@@ -33,7 +33,7 @@ export const mockSongs: Song[] = [
         duration: "2:58",
         genre: 'Lo-Fi',
         mood: 'Foco',
-        imageUrl: "https://picsum.photos/id/22/50/50",
+        imageUrl: "https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=300&h=300&fit=crop",
         audioUrl: "/audio/track3.mp3"
     },
 ];
@@ -44,14 +44,14 @@ export const mockPlaylists: Playlist[] = [
         id: 201,
         name: "Academia Turbo",
         songCount: 45,
-        coverUrl: "https://picsum.photos/id/24/50/50",
+        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
         songs: mockSongs.slice(1, 2)
     },
     {
         id: 202,
         name: "Chill Zone",
         songCount: 88,
-        coverUrl: "https://picsum.photos/id/35/50/50",
+        coverUrl: "https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=300&h=300&fit=crop",
         songs: mockSongs.slice(0, 1)
     },
 ];
@@ -65,7 +65,7 @@ export const mockRecommendation: Recommendation = {
     duration: "5:01",
     genre: 'Eletrônica',
     mood: 'Triste',
-    imageUrl: "https://picsum.photos/id/40/50/50",
+    imageUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
     audioUrl: "/audio/track4.mp3",
     justification: "A IA do Gemini notou que seu histórico tem faixas de 'Relaxante' e 'Eletrônica'. Esta música mantém o ritmo calmo, mas adiciona uma camada melancólica para noites chuvosas."
 };
