@@ -1,33 +1,106 @@
 // frontend/src/app/(main)/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link'; 
+import { useRouter } from 'next/navigation'; 
 import { MusicCard } from '@/components/UI/MusicCard';
 import { PlaylistCard } from '@/components/UI/PlaylistCard';
 import { Section } from '@/components/UI/Section';
 import { Grid } from '@/components/UI/Grid';
-import { mockRecommendation, mockPlaylists, mockSongs } from '@/lib/mockData';
-import { Recommendation } from '@/types/music';
+import { Recommendation, Playlist } from '@/types/music';
+import { useAuth } from '@/context/AuthContext'; 
 
 export default function Home() {
-  const [recommendations] = useState<Recommendation[]>([
-    mockRecommendation,
-    {
-      ...mockSongs[0],
-      justification:
-        'A IA notou que você gosta de eletrônica relaxante. Esta faixa combina sintetizadores suaves com batidas minimalistas.',
-    },
-    {
-      ...mockSongs[1],
-      justification:
-        'Baseado no seu histórico de rock energético, esta é uma ótima opção para sessões de treino.',
-    },
-    {
-      ...mockSongs[2],
-      justification:
-        'Lo-Fi perfeito para concentração. A IA detectou que você ouve muito este gênero durante o trabalho.',
-    },
-  ]);
+  // Estado para recomendações da IA
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoadingRecs, setIsLoadingRecs] = useState(true);
+  const [errorRecs, setErrorRecs] = useState<string | null>(null);
+
+  // Estados das Playlists
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true); 
+  const [errorPlaylists, setErrorPlaylists] = useState<string | null>(null); 
+
+  const { token, user, isLoading: isLoadingAuth } = useAuth();
+  const router = useRouter(); 
+
+  // Efeito para buscar recomendações E playlists
+  useEffect(() => {
+    // Só executa se a autenticação já tiver sido carregada
+    if (isLoadingAuth) {
+      setIsLoadingRecs(true); 
+      setIsLoadingPlaylists(true); 
+      return;
+    }
+
+    // --- Função para Recomendações (existente) ---
+    const fetchRecommendations = async () => {
+      if (!token) { 
+           console.log("Usuário não logado, não buscando recomendações.");
+           setIsLoadingRecs(false);
+           setErrorRecs("Faça login para ver suas recomendações personalizadas.");
+           setRecommendations([]); 
+           return;
+      }
+      setIsLoadingRecs(true);
+      setErrorRecs(null);
+      try {
+          const response = await fetch('http://localhost:3333/api/recommendations', {
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+           if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `Erro ${response.status}`);
+          }
+          const data: Recommendation[] = await response.json();
+          setRecommendations(data);
+      } catch (error) {
+          console.error("Erro ao buscar recomendações:", error);
+          setErrorRecs(error instanceof Error ? error.message : "Falha ao carregar recomendações");
+          setRecommendations([]);
+      } finally {
+          setIsLoadingRecs(false);
+      }
+    };
+
+    // --- Função para Buscar Playlists ---
+    const fetchPlaylists = async () => {
+      if (!token) {
+        console.log("Usuário não logado, não buscando playlists.");
+        setIsLoadingPlaylists(false);
+        setPlaylists([]);
+        return;
+      }
+
+      setIsLoadingPlaylists(true);
+      setErrorPlaylists(null);
+      try {
+        const response = await fetch('http://localhost:3333/api/playlists', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Erro ${response.status}`);
+        }
+        const data: Playlist[] = await response.json();
+        setPlaylists(data);
+      } catch (error) {
+        console.error("Erro ao buscar playlists:", error);
+        setErrorPlaylists(error instanceof Error ? error.message : "Falha ao carregar playlists");
+        setPlaylists([]);
+      } finally {
+        setIsLoadingPlaylists(false);
+      }
+    };
+
+    // --- Chamar as duas funções ---
+    fetchRecommendations();
+    fetchPlaylists(); 
+
+  }, [token, isLoadingAuth]); 
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto space-y-12 animate-fade-in">
@@ -38,10 +111,13 @@ export default function Home() {
         </div>
         <div className="relative z-10">
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
-            Music AI Curatorship
+            {user ? `Bem-vindo, ${user.name || user.email}!` : "Music AI Curatorship"}
           </h1>
           <p className="text-lg text-neutral-300 max-w-2xl leading-relaxed">
-            Descubra músicas personalizadas curadas por inteligência artificial. Cada recomendação vem com uma explicação detalhada sobre por que a IA acha que você pode gostar.
+            {user
+              ? "Aqui estão suas recomendações personalizadas de hoje."
+              : "Descubra músicas personalizadas curadas por inteligência artificial. Faça login para começar."
+            }
           </p>
         </div>
       </div>
@@ -49,15 +125,29 @@ export default function Home() {
       {/* Seção de Recomendações */}
       <Section
         title="Recomendações para você"
-        subtitle="Baseado no seu histórico de audição"
+        subtitle={errorRecs ? "Não foi possível carregar" : "Baseado no seu histórico de audição"}
       >
-        <Grid columns={4}>
-          {recommendations.map((rec, index) => (
-            <div key={rec.id} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-              <MusicCard recommendation={rec} />
-            </div>
-          ))}
-        </Grid>
+        {isLoadingRecs || isLoadingAuth ? (
+          <p className="text-neutral-400">Carregando recomendações da IA...</p>
+        ) : errorRecs ? (
+          <p className="text-red-500">{errorRecs}</p>
+        ) : recommendations.length === 0 && user ? (
+          <p className="text-neutral-500">Nenhuma recomendação disponível. Comece a ouvir músicas para treinar a IA!</p>
+        ) : recommendations.length > 0 && user ? (
+          <Grid columns={4}>
+            {recommendations.map((rec, index) => (
+              <div 
+                key={`${rec.id}-${index}`} 
+                className="animate-slide-up" 
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <MusicCard recommendation={rec} />
+              </div>
+            ))}
+          </Grid>
+        ) : (
+           !user && <p className="text-neutral-500">{errorRecs || "Faça login para ver suas recomendações."}</p>
+        )}
       </Section>
 
       {/* Seção de Playlists */}
@@ -65,38 +155,35 @@ export default function Home() {
         title="Suas Playlists"
         subtitle="Acesse suas playlists favoritas"
       >
-        <Grid columns={4}>
-          {mockPlaylists.map((playlist, index) => (
-            <div key={playlist.id} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-              <PlaylistCard playlist={playlist} />
-            </div>
-          ))}
-        </Grid>
+          {isLoadingAuth || isLoadingPlaylists ? (
+             <p className="text-neutral-400">Carregando playlists...</p>
+          ) : errorPlaylists ? (
+             <p className="text-red-500">{errorPlaylists}</p>
+          ) : user && playlists.length > 0 ? (
+             <Grid columns={4}>
+                {playlists.map((playlist, index) => (
+                  <Link 
+                    href={`/playlist/${playlist.id}`} 
+                    key={playlist.id} 
+                    className="animate-slide-up" 
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <PlaylistCard 
+                      playlist={playlist} 
+                      onPlay={() => router.push(`/playlist/${playlist.id}`)}
+                    />
+                  </Link>
+                ))}
+             </Grid>
+          ) : user ? (
+             <p className="text-neutral-500">Você ainda não criou nenhuma playlist.</p>
+          ) : (
+             <p className="text-neutral-500">Faça login para ver suas playlists.</p>
+          )}
       </Section>
 
-      {/* Seção de Gêneros */}
-      <Section
-        title="Explorar Gêneros"
-        subtitle="Descubra novos estilos e artistas"
-      >
-        <Grid columns={4}>
-          {['Pop', 'Rock', 'Lo-Fi', 'Eletrônica', 'Sertanejo', 'Rap', 'Reggae', 'Jazz'].map((genre, index) => (
-            <div
-              key={genre}
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700/50 p-6 cursor-pointer transition-all duration-300 hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-500/20 animate-scale-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10 text-center">
-                <p className="text-lg font-bold text-white group-hover:text-green-400 transition-colors duration-300">
-                  {genre}
-                </p>
-              </div>
-            </div>
-          ))}
-        </Grid>
-      </Section>
+      {/* <<< SEÇÃO DE GÊNEROS FOI REMOVIDA DAQUI >>> */}
+
     </div>
   );
 }
-

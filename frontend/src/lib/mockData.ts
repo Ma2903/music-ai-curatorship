@@ -4,7 +4,7 @@ import { Song, Playlist, Recommendation } from '@/types/music';
 // --- Músicas de Exemplo ---
 export const mockSongs: Song[] = [
     {
-        id: 101,
+        id: "101", // <<< MUDANÇA
         title: "Sunset Drive",
         artist: "Aetherius",
         album: "Neon Dreams",
@@ -15,7 +15,7 @@ export const mockSongs: Song[] = [
         audioUrl: "/audio/track1.mp3"
     },
     {
-        id: 102,
+        id: "102", // <<< MUDANÇA
         title: "City Lights",
         artist: "The Roadies",
         album: "Urban Flow",
@@ -26,7 +26,7 @@ export const mockSongs: Song[] = [
         audioUrl: "/audio/track2.mp3"
     },
     {
-        id: 103,
+        id: "103", // <<< MUDANÇA
         title: "Quiet Morning",
         artist: "Lo-Fi Panda",
         album: "Study Beats V.2",
@@ -58,7 +58,7 @@ export const mockPlaylists: Playlist[] = [
 
 // --- Recomendação de Exemplo (O Retorno da IA) ---
 export const mockRecommendation: Recommendation = {
-    id: 104,
+    id: "104", // <<< MUDANÇA
     title: "Echoes in the Rain",
     artist: "Silent Observer",
     album: "Ambient",

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2017", // Alinhado com o frontend
+    "module": "CommonJS", // Padrão para Node.js com Express
+    "lib": ["ESNext"],
+    "outDir": "./dist", // Pasta onde o código compilado será salvo
+    "rootDir": "./src", // Pasta onde o código TypeScript ficará
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node", // Importante para Node.js
+    "sourceMap": true, // Ajuda na depuração
+    "baseUrl": ".", // Permite imports a partir da raiz (src)
+    "paths": {
+      "@/*": ["src/*"] // Similar ao frontend para imports mais limpos
+    }
+  },
+  "include": ["src/**/*"], // Inclui todos os arquivos dentro da pasta src
+  "exclude": ["node_modules", "dist"] // Exclui node_modules e a pasta de build
+}

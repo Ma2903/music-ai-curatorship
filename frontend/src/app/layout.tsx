@@ -1,7 +1,9 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-// import './globals.css'; // REMOVA OU COMENTE ESTA LINHA
+import { AuthProvider } from '@/context/AuthContext'; // <<< IMPORTAR AuthProvider
+
+// import './globals.css'; // Mantenha comentado
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,12 +20,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        {/* ADICIONE ESTA LINHA PARA O TAILWIND VIA CDN */}
         <script src="https://cdn.tailwindcss.com"></script>
       </head>
-      {/* Mantenha as classes no body se quiser o fundo padrão */}
       <body className={`${inter.className} min-h-screen bg-neutral-950 text-white`}>
-        {children}
+        {/* <<< ENVOLVER O children COM AuthProvider >>> */}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

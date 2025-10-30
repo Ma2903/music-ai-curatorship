@@ -1,0 +1,22 @@
+# docker-compose.yml (na raiz do projeto)
+version: '3.8' # Especifica a versão do Docker Compose
+
+services:
+  # Define o serviço do banco de dados PostgreSQL
+  postgres_db:
+    image: postgres:14 # Usa a imagem oficial do PostgreSQL versão 14
+    container_name: music_ai_postgres # Nome do container (opcional, mas útil)
+    environment:
+      POSTGRES_USER: postgres # Nome de usuário padrão do Postgres
+      POSTGRES_PASSWORD: m8e7kp54 # <<< TROQUE ISSO por uma senha forte!
+      POSTGRES_DB: music_ai_db # Nome do banco de dados que será criado automaticamente
+    ports:
+      - "5432:5432" # Mapeia a porta 5432 do container para a porta 5432 do seu PC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persiste os dados do banco mesmo se o container parar/reiniciar
+    restart: unless-stopped # Reinicia o container a menos que seja parado manualmente
+
+volumes:
+  # Define o volume nomeado para persistir os dados
+  postgres_data:
+    driver: local

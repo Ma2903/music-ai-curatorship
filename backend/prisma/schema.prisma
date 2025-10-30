@@ -1,0 +1,95 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enumerações para Mood e Genre (baseado nos types do frontend)
+enum Mood {
+  Alegre
+  Triste
+  Relaxante
+  Foco
+  Energético
+}
+
+enum Genre {
+  Pop
+  Rock
+  LoFi // Prisma não aceita '-' no nome do enum, use CamelCase ou underscore
+  Eletronica
+  Sertanejo
+  // Adicione outros gêneros se necessário (Rap, Reggae, Jazz mencionados no frontend)
+  Rap
+  Reggae
+  Jazz
+}
+
+model Playlist {
+  id        Int      @id @default(autoincrement())
+  name      String
+  coverUrl  String   // URL da capa da playlist
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  songs     PlaylistSong[] // <<< ADICIONADO DE VOLTA
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId]) // Índice para otimizar buscas por usuário
+}
+
+// <<< NOVO MODELO 'PlaylistSong' >>>
+model PlaylistSong {
+  id            Int      @id @default(autoincrement())
+  playlistId    Int
+  jamendoSongId String   // ID string do Jamendo
+  addedAt       DateTime @default(now())
+
+  // Armazena detalhes da música para acesso rápido
+  songTitle     String
+  songArtist    String
+  songAlbum     String
+  songDuration  String
+  songImageUrl  String?
+  songAudioUrl  String?
+
+  // Relação com a Playlist
+  playlist      Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade) // Adicionado onDelete
+
+  @@unique([playlistId, jamendoSongId]) // Evita duplicatas na mesma playlist
+  @@index([playlistId])
+  @@index([jamendoSongId])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique // Usaremos email como 'nome de usuário'
+  name      String?        // Nome opcional
+  password  String         // Armazenará o hash da senha
+  playlists Playlist[]
+  history   HistoryEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HistoryEntry {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  jamendoSongId String   // ID string do Jamendo
+  // Detalhes da música ouvidos (armazenados aqui para o prompt do Gemini)
+  songTitle     String
+  songArtist    String
+  songGenre     String?
+  songMood      String?
+  // Fim detalhes
+  listenedAt    DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([jamendoSongId])
+}
