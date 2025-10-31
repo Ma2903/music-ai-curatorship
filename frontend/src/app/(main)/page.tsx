@@ -10,6 +10,9 @@ import { Section } from '@/components/UI/Section';
 import { Grid } from '@/components/UI/Grid';
 import { Recommendation, Playlist } from '@/types/music';
 import { useAuth } from '@/context/AuthContext'; 
+// --- ADIÇÃO ---
+import { usePlaylists } from '@/context/PlaylistContext';
+// --- FIM DA ADIÇÃO ---
 
 export default function Home() {
   // Estado para recomendações da IA
@@ -17,24 +20,26 @@ export default function Home() {
   const [isLoadingRecs, setIsLoadingRecs] = useState(true);
   const [errorRecs, setErrorRecs] = useState<string | null>(null);
 
-  // Estados das Playlists
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true); 
-  const [errorPlaylists, setErrorPlaylists] = useState<string | null>(null); 
+  // --- ALTERAÇÃO: Remover estado local de playlists ---
+  // const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  // const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true); 
+  // const [errorPlaylists, setErrorPlaylists] = useState<string | null>(null); 
+  
+  // --- ALTERAÇÃO: Consumir do contexto ---
+  const { playlists, isLoading: isLoadingPlaylists, error: errorPlaylists } = usePlaylists();
+  // --- FIM DA ALTERAÇÃO ---
 
   const { token, user, isLoading: isLoadingAuth } = useAuth();
   const router = useRouter(); 
 
-  // Efeito para buscar recomendações E playlists
+  // --- ALTERAÇÃO: Simplificar o useEffect ---
+  // Removemos a função fetchPlaylists daqui
   useEffect(() => {
-    // Só executa se a autenticação já tiver sido carregada
     if (isLoadingAuth) {
       setIsLoadingRecs(true); 
-      setIsLoadingPlaylists(true); 
       return;
     }
 
-    // --- Função para Recomendações (existente) ---
     const fetchRecommendations = async () => {
       if (!token) { 
            console.log("Usuário não logado, não buscando recomendações.");
@@ -63,44 +68,12 @@ export default function Home() {
           setIsLoadingRecs(false);
       }
     };
-
-    // --- Função para Buscar Playlists ---
-    const fetchPlaylists = async () => {
-      if (!token) {
-        console.log("Usuário não logado, não buscando playlists.");
-        setIsLoadingPlaylists(false);
-        setPlaylists([]);
-        return;
-      }
-
-      setIsLoadingPlaylists(true);
-      setErrorPlaylists(null);
-      try {
-        const response = await fetch('http://localhost:3333/api/playlists', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Erro ${response.status}`);
-        }
-        const data: Playlist[] = await response.json();
-        setPlaylists(data);
-      } catch (error) {
-        console.error("Erro ao buscar playlists:", error);
-        setErrorPlaylists(error instanceof Error ? error.message : "Falha ao carregar playlists");
-        setPlaylists([]);
-      } finally {
-        setIsLoadingPlaylists(false);
-      }
-    };
-
-    // --- Chamar as duas funções ---
+    
     fetchRecommendations();
-    fetchPlaylists(); 
+    // fetchPlaylists() foi removido daqui
 
   }, [token, isLoadingAuth]); 
+  // --- FIM DA ALTERAÇÃO ---
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto space-y-12 animate-fade-in">
@@ -127,6 +100,7 @@ export default function Home() {
         title="Recomendações para você"
         subtitle={errorRecs ? "Não foi possível carregar" : "Baseado no seu histórico de audição"}
       >
+        {/* ... (Renderização das recomendações não muda) ... */}
         {isLoadingRecs || isLoadingAuth ? (
           <p className="text-neutral-400">Carregando recomendações da IA...</p>
         ) : errorRecs ? (
@@ -151,6 +125,7 @@ export default function Home() {
       </Section>
 
       {/* Seção de Playlists */}
+      {/* A lógica de renderização agora usa os dados do contexto */}
       <Section
         title="Suas Playlists"
         subtitle="Acesse suas playlists favoritas"
@@ -181,8 +156,6 @@ export default function Home() {
              <p className="text-neutral-500">Faça login para ver suas playlists.</p>
           )}
       </Section>
-
-      {/* <<< SEÇÃO DE GÊNEROS FOI REMOVIDA DAQUI >>> */}
 
     </div>
   );

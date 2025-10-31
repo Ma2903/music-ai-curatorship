@@ -5,60 +5,57 @@ import Link from 'next/link';
 import { Home as HomeIcon, Search, Library, Plus, ChevronRight, LogIn, LogOut, UserPlus } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { Playlist } from '@/types/music';
+// import { Playlist } from '@/types/music'; // Não é mais necessário aqui
 import { useState, useEffect } from 'react'; 
 import { CreatePlaylistModal } from '@/components/Playlist'; 
 import { useRouter } from 'next/navigation'; 
+import Swal from 'sweetalert2';
+// --- ADIÇÃO ---
+import { usePlaylists } from '@/context/PlaylistContext';
+// --- FIM DA ADIÇÃO ---
 
 export function Sidebar() {
-  const { user, logout, isLoading, token } = useAuth(); 
+  const { user, logout: performActualLogout, isLoading, token } = useAuth(); 
   const router = useRouter(); 
 
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
+  // --- ALTERAÇÃO: Remover estado local de playlists ---
+  // const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  // const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
+  
+  // --- ALTERAÇÃO: Consumir do contexto ---
+  const { playlists, isLoading: isLoadingPlaylists } = usePlaylists();
+  // --- FIM DA ALTERAÇÃO ---
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Efeito para buscar playlists
-  useEffect(() => {
-    if (!token || !user) {
-      setPlaylists([]); 
-      return;
-    }
+  // --- ALTERAÇÃO: Remover useEffect de busca ---
+  // O useEffect que buscava playlists foi removido
+  // --- FIM DA ALTERAÇÃO ---
 
-    const fetchPlaylists = async () => {
-      setIsLoadingPlaylists(true);
-      try {
-        const response = await fetch('http://localhost:3333/api/playlists', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Falha ao buscar playlists');
-        }
-        const data: Playlist[] = await response.json();
-        setPlaylists(data);
-      } catch (error) {
-        console.error("Erro ao buscar playlists:", error);
-        setPlaylists([]); 
-      } finally {
-        setIsLoadingPlaylists(false);
+
+  const showLogoutConfirmation = () => {
+    Swal.fire({
+      title: 'Você tem certeza?',
+      text: "Sua sessão será encerrada.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#1DB954',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sim, quero sair!',
+      cancelButtonText: 'Cancelar',
+      background: '#181818',
+      color: '#FFFFFF'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        performActualLogout();
       }
-    };
-
-    fetchPlaylists();
-  }, [token, user, isModalOpen]); 
+    });
+  };
 
   return (
     <> 
-      {/* ================================================================
-        <<< CORREÇÃO AQUI >>>
-        Troquei 'h-screen' por 'h-full'
-        Adicionei 'pb-32' (padding-bottom: 128px) para criar espaço para o player (h-24 = 96px) + um respiro.
-        'box-border' garante que o padding seja calculado dentro da altura total.
-        ================================================================
-      */}
       <aside className="w-60 bg-neutral-900 p-6 flex flex-col fixed h-full top-0 left-0 z-40 border-r border-neutral-800 box-border pb-32">
+        {/* ... (Navegação Principal sem mudança) ... */}
         {/* Logo/Título */}
         <div className="mb-8">
           <h1 className="text-xl font-bold text-white">Music AI</h1>
@@ -121,15 +118,12 @@ export function Sidebar() {
           </div>
 
           {/* Lista de Playlists (Scrollável) */}
+          {/* A lógica de renderização agora usa os dados do contexto */}
           <nav className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-2">
-            {(isLoading || isLoadingPlaylists) && !user && ( 
+            {(isLoading || (user && isLoadingPlaylists)) && ( 
                 <p className="text-xs text-neutral-500 px-2">Carregando...</p>
             )}
             
-            {user && isLoadingPlaylists && ( 
-                 <p className="text-xs text-neutral-500 px-2">Carregando playlists...</p>
-            )}
-
             {user && !isLoadingPlaylists && playlists.length > 0 && (
               playlists.map((playlist) => ( 
                 <Link
@@ -166,6 +160,7 @@ export function Sidebar() {
           </nav>
         </div>
 
+        {/* ... (Footer da Sidebar sem mudança) ... */}
         {/* Footer da Sidebar com Botões de Auth */}
         <div className="mt-6 pt-6 border-t border-neutral-800">
           {isLoading ? (
@@ -177,7 +172,7 @@ export function Sidebar() {
                       Logado como: <span className="font-medium text-white">{user.name || user.email}</span>
                   </p>
                   <button
-                      onClick={logout} 
+                      onClick={showLogoutConfirmation} 
                       className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-white bg-red-600/50 hover:bg-red-600/80 rounded-lg transition-colors"
                   >
                       <LogOut size={16} />
@@ -206,7 +201,6 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Renderiza o Modal */}
       <CreatePlaylistModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)} 

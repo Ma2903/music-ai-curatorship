@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/UI/Button';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+// --- ALTERADO: Removido AlertCircle ---
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+// --- ADICIONADO ---
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+// --- FIM DA ADIÇÃO ---
 
 // Interface para o usuário do frontend
 interface FrontendUser {
@@ -19,7 +24,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // --- REMOVIDO: Estado de erro ---
+  // const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -28,11 +34,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    // --- REMOVIDO: setError(null) ---
     setIsLoading(true);
 
     if (!email || !password) {
-      setError('Email e senha são obrigatórios.');
+      // --- ALTERADO: usa Swal.fire ---
+      Swal.fire({
+        title: 'Campos incompletos',
+        text: 'Email e senha são obrigatórios.',
+        icon: 'error',
+        background: '#181818',
+        color: '#FFFFFF'
+      });
+      // --- FIM DA ALTERAÇÃO ---
       setIsLoading(false);
       return;
     }
@@ -57,7 +71,15 @@ export default function LoginPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       console.error("Erro no login:", message);
-      setError(message);
+      // --- ALTERADO: usa Swal.fire ---
+      Swal.fire({
+        title: 'Erro no Login',
+        text: message,
+        icon: 'error',
+        background: '#181818',
+        color: '#FFFFFF'
+      });
+      // --- FIM DA ALTERAÇÃO ---
     } finally {
       setIsLoading(false);
     }
@@ -167,17 +189,7 @@ export default function LoginPage() {
               </span>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div
-                className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/50 rounded-lg animate-shake"
-                role="alert"
-                aria-live="assertive"
-              >
-                <AlertCircle size={20} className="text-red-500 flex-shrink-0" aria-hidden="true" />
-                <p className="text-sm text-red-500 font-medium">{error}</p>
-              </div>
-            )}
+            {/* --- REMOVIDO: Bloco de erro --- */}
 
             {/* Submit Button */}
             <button
@@ -200,6 +212,9 @@ export default function LoginPage() {
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-800" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-neutral-900/50 text-neutral-400">ou</span>
             </div>
           </div>
 

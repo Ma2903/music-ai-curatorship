@@ -5,20 +5,21 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Song, Recommendation } from '@/types/music'; // Importa Song
+import { Song, Recommendation } from '@/types/music'; 
 import { Modal } from '@/components/UI/Modal';
 import { Button } from '@/components/UI/Button';
 import { SearchBar } from '@/components/UI/SearchBar';
 import { Music, X } from 'lucide-react';
+// --- ADIÇÃO ---
+import { usePlaylists } from '@/context/PlaylistContext'; // 1. Importar o hook
+// --- FIM DA ADIÇÃO ---
 
 interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// O tipo de música que o /api/search retorna
 type JamendoTrack = Omit<Recommendation, 'justification'>;
-// O tipo que o SearchBar espera nas sugestões
 type SuggestionItem = Pick<Song, 'id' | 'title' | 'artist' | 'imageUrl'>;
 
 export function CreatePlaylistModal({
@@ -36,10 +37,14 @@ export function CreatePlaylistModal({
   const { token } = useAuth();
   const router = useRouter();
   const debouncedQuery = useDebounce(query, 400);
+  
+  // --- ADIÇÃO ---
+  const { refetchPlaylists } = usePlaylists(); // 2. Pegar a função de refetch
+  // --- FIM DA ADIÇÃO ---
 
-  // Busca sugestões de músicas
+  // Busca sugestões de músicas (Não muda)
   useEffect(() => {
-    if (!debouncedQuery.trim() || selectedSong) { // Não busca se já selecionou
+    if (!debouncedQuery.trim() || selectedSong) { 
       setSuggestions([]);
       return;
     }
@@ -70,12 +75,12 @@ export function CreatePlaylistModal({
       }
     };
     fetchSuggestions();
-  }, [debouncedQuery, selectedSong]); // Adiciona selectedSong
+  }, [debouncedQuery, selectedSong]); 
 
-  // Limpa o estado quando o modal fecha
+  // Limpa o estado quando o modal fecha (Não muda)
   useEffect(() => {
     if (!isOpen) {
-      setTimeout(() => { // Dá tempo para a animação de saída
+      setTimeout(() => { 
         setName('');
         setQuery('');
         setSuggestions([]);
@@ -86,26 +91,22 @@ export function CreatePlaylistModal({
     }
   }, [isOpen]);
 
-  // Handler para quando uma música é selecionada
+  // Handler para selecionar música (Não muda)
   const handleSelectSong = async (suggestion: SuggestionItem) => {
-    setQuery(suggestion.title); // Atualiza o input da SearchBar
-    setSuggestions([]); // Esconde sugestões
-    setIsLoadingSearch(true); // Mostra loading enquanto busca detalhes
+    setQuery(suggestion.title); 
+    setSuggestions([]); 
+    setIsLoadingSearch(true); 
     
     try {
-        // HACK: /api/search não busca por ID, então buscamos pelo nome/artista
-        // Idealmente, o backend teria um GET /api/tracks/:id
         const response = await fetch(`http://localhost:3333/api/search?q=${encodeURIComponent(suggestion.title + " " + suggestion.artist)}&limit=5`);
         const tracks: JamendoTrack[] = await response.json();
         
-        // Encontra o track exato pelo ID
         const foundTrack = tracks.find(t => t.id === suggestion.id);
         
         if (foundTrack) {
              setSelectedSong(foundTrack);
              console.log("Música selecionada:", foundTrack);
         } else {
-            // Fallback se não encontrar (usa os dados limitados da sugestão)
             setSelectedSong({ 
                 ...suggestion, 
                 id: suggestion.id.toString(), 
@@ -145,7 +146,7 @@ export function CreatePlaylistModal({
         },
         body: JSON.stringify({
           name: name,
-          initialSong: selectedSong, // Envia o objeto Song completo
+          initialSong: selectedSong, 
         }),
       });
 
@@ -156,9 +157,14 @@ export function CreatePlaylistModal({
       }
 
       console.log('Playlist criada:', data);
+      
+      // --- ADIÇÃO ---
+      await refetchPlaylists(); // 3. Avisa o contexto que uma nova playlist existe
+      // --- FIM DA ADIÇÃO ---
+
       onClose(); // Fecha o modal
       router.push(`/playlist/${data.id}`); // Redireciona para a nova playlist
-      // A sidebar irá recarregar pois `isModalOpen` está em sua dependência
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido.');
     } finally {
@@ -166,6 +172,7 @@ export function CreatePlaylistModal({
     }
   };
 
+  // --- O RESTO DO JSX (RETURN) PERMANECE O MESMO ---
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Criar nova playlist">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -200,10 +207,9 @@ export function CreatePlaylistModal({
           <div className="relative">
             <SearchBar
               placeholder="Buscar música inicial..."
-              // Passa a query e o handler, mas não o onSearch
               onQueryChange={setQuery} 
-              onSearch={() => {}} // Não faz nada no Enter
-              suggestions={[]} // Renderizamos nossas próprias sugestões
+              onSearch={() => {}} 
+              suggestions={[]} 
               isLoadingSuggestions={isLoadingSearch}
             />
             {/* Lista de Sugestões Customizada */}

@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useContext, useRef, useEffect, ReactNode, useCallback } from 'react';
 import { Song } from '@/types/music';
-import { useAuth } from './AuthContext'; // <<< 1. IMPORTAR o hook de autenticação
+import { useAuth } from './AuthContext';
 
 interface PlayerContextType {
   currentSong: Song | null;
@@ -14,6 +14,13 @@ interface PlayerContextType {
   audioElement: HTMLAudioElement | null;
   currentTime: number;
   duration: number;
+  volume: number;
+  seek: (time: number) => void;
+  changeVolume: (volume: number) => void;
+  // --- ADIÇÕES ---
+  isSeeking: boolean;
+  setIsSeeking: (seeking: boolean) => void;
+  // --- FIM DAS ADIÇÕES ---
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -25,23 +32,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1); // 1 = 100%
+  // --- ADIÇÃO ---
+  const [isSeeking, setIsSeeking] = useState(false);
+  // --- FIM DA ADIÇÃO ---
 
-  const { token } = useAuth(); // <<< 2. PEGAR O TOKEN DO AuthContext >>>
+  const { token } = useAuth();
 
-  // --- Função para Salvar Histórico (Atualizada) ---
   const saveToHistory = useCallback(async (song: Song) => {
-    if (!token || !song) { // <<< 3. USA O TOKEN DO CONTEXTO >>>
+    if (!token || !song) {
         console.log("Não logado ou sem música, não salvando histórico.");
         return;
     }
-
     console.log(`Tentando salvar no histórico: ${song.title} (ID: ${song.id})`);
     try {
       const response = await fetch('http://localhost:3333/api/history', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Envia o token
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           songId: song.id,
@@ -51,7 +60,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           mood: song.mood
         })
       });
-
       if (response.ok) {
         console.log("Histórico salvo com sucesso para:", song.title);
       } else {
@@ -61,11 +69,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Erro de rede ao salvar histórico:", error);
     }
-  }, [token]); // <<< 4. ADICIONAR token como dependência >>>
+  }, [token]);
 
-  // ... (tryPlay, loadSong como no seu arquivo original) ...
   const tryPlay = useCallback(() => {
-    // <<< USA audioUrl >>>
     if (audioRef.current && currentSong?.audioUrl) {
       console.log("Tentando play() para:", currentSong.title);
       const playPromise = audioRef.current.play();
@@ -83,7 +89,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [currentSong]);
 
   const loadSong = useCallback((song: Song) => {
-    // <<< USA audioUrl >>>
     if (!audioRef.current || !song.audioUrl) {
       console.warn(`loadSong: audioRef indisponível ou música "${song.title}" sem audioUrl.`);
       if (audioRef.current) audioRef.current.src = '';
@@ -95,7 +100,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
     console.log("loadSong: Carregando", song.title, song.audioUrl);
     setCurrentSong(song);
-    // <<< USA audioUrl >>>
     audioRef.current.src = song.audioUrl;
     audioRef.current.load();
     setIsPlaying(false);
@@ -116,13 +120,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (loaded) {
           setTimeout(() => {
               tryPlay();
-              saveToHistory(song); // <<< 5. CHAMA A FUNÇÃO DE HISTÓRICO >>>
+              saveToHistory(song);
           }, 50);
       }
     }
-  }, [currentSong, isPlaying, loadSong, tryPlay, saveToHistory]); // <<< 6. ADICIONAR saveToHistory >>>
+  }, [currentSong, isPlaying, loadSong, tryPlay, saveToHistory]);
 
-  // ... (pauseSong, togglePlayPause, useEffects, etc. como no seu arquivo original) ...
   const pauseSong = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -131,7 +134,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const togglePlayPause = useCallback(() => {
-    // <<< USA audioUrl >>>
     if (!currentSong || !currentSong.audioUrl) {
       console.warn("togglePlayPause: Nenhuma música válida carregada.");
       return;
@@ -143,18 +145,42 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [isPlaying, currentSong, pauseSong, tryPlay]);
 
+  const seek = (time: number) => {
+    if (audioRef.current && isFinite(time)) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time); // Atualiza o estado imediatamente
+    }
+  };
+
+  const changeVolume = (newVolume: number) => {
+    if (audioRef.current) {
+      const clampedVolume = Math.max(0, Math.min(1, newVolume));
+      audioRef.current.volume = clampedVolume;
+      setVolume(clampedVolume);
+    }
+  };
+
   useEffect(() => {
     if (!audioRef.current) {
         audioRef.current = new Audio();
+        audioRef.current.volume = volume;
         console.log("Elemento Audio criado.");
         setIsReady(true);
     }
-  }, []);
+  }, [volume]); 
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !isReady) return;
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    
+    // --- ALTERAÇÃO: Só atualiza o tempo se não estiver arrastando ---
+    const handleTimeUpdate = () => {
+      if (audio.currentTime && !isSeeking) {
+        setCurrentTime(audio.currentTime);
+      }
+    };
+    // --- FIM DA ALTERAÇÃO ---
+
     const handleLoadedMetadata = () => setDuration(isNaN(audio.duration) ? 0 : audio.duration);
     const handleEnded = () => { setIsPlaying(false); setCurrentTime(0); };
     const handlePlay = () => setIsPlaying(true);
@@ -177,7 +203,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('error', handleError);
     };
-  }, [isReady]);
+  }, [isReady, isSeeking]); // Adiciona 'isSeeking' como dependência
 
   return (
     <PlayerContext.Provider value={{
@@ -188,7 +214,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         togglePlayPause,
         audioElement: audioRef.current,
         currentTime,
-        duration
+        duration,
+        volume,
+        seek,
+        changeVolume,
+        // --- ADIÇÃO ---
+        isSeeking,
+        setIsSeeking
+        // --- FIM DA ADIÇÃO ---
         }}>
       {children}
     </PlayerContext.Provider>

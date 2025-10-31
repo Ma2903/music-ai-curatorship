@@ -4,15 +4,21 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+// --- ALTERADO: Removido AlertCircle, CheckCircle2 ---
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+// --- ADICIONADO ---
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+// --- FIM DA ADIÇÃO ---
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // --- REMOVIDO: Estados de erro e sucesso ---
+  // const [error, setError] = useState<string | null>(null);
+  // const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
@@ -31,15 +37,25 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    // --- REMOVIDO: Limpeza de estados ---
     setIsLoading(true);
 
+    const showError = (message: string) => {
+      Swal.fire({
+        title: 'Erro no Registro',
+        text: message,
+        icon: 'error',
+        background: '#181818',
+        color: '#FFFFFF'
+      });
+      setIsLoading(false);
+    };
+
     if (!email || !password || !name) {
-      setError('Todos os campos são obrigatórios.'); setIsLoading(false); return;
+      showError('Todos os campos são obrigatórios.'); return;
     }
     if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres.'); setIsLoading(false); return;
+      showError('A senha deve ter pelo menos 6 caracteres.'); return;
     }
 
     try {
@@ -55,14 +71,25 @@ export default function RegisterPage() {
         throw new Error(data.error || `Erro ${response.status}`);
       }
 
-      setSuccess('Usuário registrado com sucesso! Redirecionando para o login...');
-      setTimeout(() => { router.push('/login'); }, 2000); // Redireciona após 2s
+      // --- ALTERADO: usa Swal.fire ---
+      await Swal.fire({
+        title: 'Sucesso!',
+        text: 'Usuário registrado com sucesso! Redirecionando para o login...',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        background: '#181818',
+        color: '#FFFFFF'
+      });
+      router.push('/login'); // Redireciona
+      // --- FIM DA ALTERAÇÃO ---
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       console.error("Erro no registro:", message);
-      setError(message);
+      showError(message); // Usa a função de erro do SweetAlert
     } finally {
+      // --- ALTERADO: Apenas seta isLoading ---
       setIsLoading(false);
     }
   };
@@ -229,29 +256,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div
-                className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/50 rounded-lg animate-shake"
-                role="alert"
-                aria-live="assertive"
-              >
-                <AlertCircle size={20} className="text-red-500 flex-shrink-0" aria-hidden="true" />
-                <p className="text-sm text-red-500 font-medium">{error}</p>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-              <div
-                className="flex items-center gap-2 p-4 bg-green-500/10 border border-green-500/50 rounded-lg animate-fade-in"
-                role="status"
-                aria-live="polite"
-              >
-                <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" aria-hidden="true" />
-                <p className="text-sm text-green-500 font-medium">{success}</p>
-              </div>
-            )}
+            {/* --- REMOVIDO: Bloco de Erro e Sucesso --- */}
 
             {/* Submit Button */}
             <button
